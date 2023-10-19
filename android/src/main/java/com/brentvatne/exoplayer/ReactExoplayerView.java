@@ -570,7 +570,7 @@ class ReactExoplayerView extends FrameLayout implements
                                     eventEmitter.error("Failed to initialize DRM Session Manager Framework!", new Exception("DRM Session Manager Framework failure!"), "3003");
                                     return;
                                 }
-                                    
+
                                 if (activity == null) {
                                     Log.e("ExoPlayer Exception", "Failed to initialize Player!");
                                     eventEmitter.error("Failed to initialize Player!", new Exception("Current Activity is null!"), "1001");
@@ -1442,6 +1442,8 @@ class ReactExoplayerView extends FrameLayout implements
             case PlaybackException.ERROR_CODE_DRM_PROVISIONING_FAILED:
             case PlaybackException.ERROR_CODE_DRM_SYSTEM_ERROR:
             case PlaybackException.ERROR_CODE_DRM_UNSPECIFIED:
+            case PlaybackException.ERROR_CODE_DRM_SCHEME_UNSUPPORTED:
+            case PlaybackException.ERROR_CODE_DECODING_FAILED:
                 if (!hasDrmFailed) {
                     // When DRM fails to reach the app level certificate server it will fail with a source error so we assume that it is DRM related and try one more time
                     hasDrmFailed = true;

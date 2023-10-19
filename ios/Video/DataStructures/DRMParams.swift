@@ -5,9 +5,10 @@ struct DRMParams {
     let contentId: String?
     let certificateUrl: String?
     let base64Certificate: Bool?
-    
+    let options: Dictionary<String,Any>?
+
     let json: NSDictionary?
-    
+
     init(_ json: NSDictionary!) {
         guard json != nil else {
             self.json = nil
@@ -17,6 +18,7 @@ struct DRMParams {
             self.certificateUrl = nil
             self.base64Certificate = nil
             self.headers = nil
+            self.options = nil
             return
         }
         self.json = json
@@ -26,5 +28,6 @@ struct DRMParams {
         self.certificateUrl = json["certificateUrl"] as? String
         self.base64Certificate = json["base64Certificate"] as? Bool
         self.headers = json["headers"] as? Dictionary<String,Any>
+        self.options = json["options"] as? Dictionary<String,Any>
     }
 }

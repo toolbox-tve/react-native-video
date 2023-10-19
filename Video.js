@@ -260,10 +260,11 @@ export default class Video extends Component {
   };
 
   _onGetLicense = (event) => {
+    console.log('[react-native-video/onGetLicense]>>>>> Event:', event.nativeEvent);
     if (this.props.drm && this.props.drm.getLicense instanceof Function) {
       const data = event.nativeEvent;
       if (data && data.spcBase64) {
-        const getLicenseOverride = this.props.drm.getLicense(data.spcBase64, data.contentId, data.licenseUrl);
+        const getLicenseOverride = this.props.drm.getLicense(data.spcBase64, data.contentId, data.licenseUrl, data.assetId);
         const getLicensePromise = Promise.resolve(getLicenseOverride); // Handles both scenarios, getLicenseOverride being a promise and not.
         getLicensePromise.then((result => {
           if (result !== undefined) {
@@ -449,6 +450,7 @@ Video.propTypes = {
     base64Certificate: PropTypes.bool,
     certificateUrl: PropTypes.string,
     getLicense: PropTypes.func,
+    options: PropTypes.shape({}),
   }),
   localSourceEncryptionKeyScheme: PropTypes.string,
   minLoadRetryCount: PropTypes.number,

@@ -11,10 +11,10 @@ struct RCTVideoDRM {
         headers: [String:Any]?
     ) -> Promise<Data> {
         let request = createLicenseRequest(licenseServer:licenseServer, spcData:spcData, contentId:contentId, headers:headers)
-        
+
         return Promise<Data>(on: .global()) { fulfill, reject in
             let postDataTask = URLSession.shared.dataTask(with: request as URLRequest, completionHandler:{ (data:Data!,response:URLResponse!,error:Error!) in
-                
+
                 let httpResponse:HTTPURLResponse! = (response as! HTTPURLResponse)
 
                 guard error == nil else {
@@ -27,18 +27,18 @@ struct RCTVideoDRM {
                     reject(RCTVideoErrorHandler.licenseRequestNotOk(httpResponse.statusCode))
                     return
                 }
-                
+
                 guard data != nil, let decodedData = Data(base64Encoded: data, options: []) else {
                     reject(RCTVideoErrorHandler.noDataFromLicenseRequest)
                     return
                 }
-                
+
                 fulfill(decodedData)
             })
             postDataTask.resume()
         }
     }
-    
+
     static func createLicenseRequest(
         licenseServer: String,
         spcData: Data?,
@@ -47,7 +47,7 @@ struct RCTVideoDRM {
     ) -> URLRequest {
         var request = URLRequest(url: URL(string: licenseServer)!)
         request.httpMethod = "POST"
-        
+
         if let headers = headers {
             for item in headers {
                 guard let key = item.key as? String, let value = item.value as? String else {
@@ -56,16 +56,16 @@ struct RCTVideoDRM {
                 request.setValue(value, forHTTPHeaderField: key)
             }
         }
-        
+
         let spcEncoded = spcData?.base64EncodedString(options: [])
         let spcUrlEncoded = CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, spcEncoded as? CFString? as! CFString, nil, "?=&+" as CFString, CFStringBuiltInEncodings.UTF8.rawValue) as? String
         let post = String(format:"spc=%@&%@", spcUrlEncoded as! CVarArg, contentId)
         let postData = post.data(using: String.Encoding.utf8, allowLossyConversion:true)
         request.httpBody = postData
-        
+
         return request
     }
-    
+
     static func fetchSpcData(
         loadingRequest: AVAssetResourceLoadingRequest,
         certificateData: Data,
@@ -79,20 +79,20 @@ struct RCTVideoDRM {
             } catch _ {
                 print("SPC error")
             }
-            
+
             if spcError != nil {
                 reject(spcError)
             }
-            
+
             guard let spcData = spcData else {
                 reject(RCTVideoErrorHandler.noSPC)
                 return
             }
-            
+
             fulfill(spcData)
         }
     }
-    
+
     static func createCertificateData(certificateStringUrl:String?, base64Certificate:Bool?) -> Promise<Data> {
         return Promise<Data>(on: .global()) { fulfill, reject in
 
@@ -109,25 +109,25 @@ struct RCTVideoDRM {
                     certificateData = Data(base64Encoded: certificateData! as Data, options: .ignoreUnknownCharacters)
                 }
             } catch {}
-            
+
             guard let certificateData = certificateData else {
                 reject(RCTVideoErrorHandler.noCertificateData)
                 return
             }
-            
+
             fulfill(certificateData)
         }
     }
-    
+
     static func handleWithOnGetLicense(loadingRequest: AVAssetResourceLoadingRequest, contentId:String?, certificateUrl:String?, base64Certificate:Bool?) -> Promise<Data> {
         let contentIdData = contentId?.data(using: .utf8)
-        
+
         return RCTVideoDRM.createCertificateData(certificateStringUrl:certificateUrl, base64Certificate:base64Certificate)
             .then{ certificateData -> Promise<Data> in
                 guard let contentIdData = contentIdData else {
                     throw RCTVideoError.invalidContentId as! Error
                 }
-                
+
                 return RCTVideoDRM.fetchSpcData(
                     loadingRequest:loadingRequest,
                     certificateData:certificateData,
@@ -135,16 +135,16 @@ struct RCTVideoDRM {
                 )
             }
     }
-    
-    static func handleInternalGetLicense(loadingRequest: AVAssetResourceLoadingRequest, contentId:String?, licenseServer:String?, certificateUrl:String?, base64Certificate:Bool?, headers: [String:Any]?) -> Promise<Data> {
+
+    static func handleInternalGetLicense(loadingRequest: AVAssetResourceLoadingRequest, contentId:String?, licenseServer:String?, certificateUrl:String?, base64Certificate:Bool?, headers: [String:Any]?, options: [String:Any]?) -> Promise<Data> {
         let url = loadingRequest.request.url
-        
+
         guard let contentId = contentId ?? url?.absoluteString.replacingOccurrences(of: "skd://", with:"") else {
             return Promise(RCTVideoError.invalidContentId as! Error)
         }
-        
+
         let contentIdData = NSData(bytes: contentId.cString(using: String.Encoding.utf8), length:contentId.lengthOfBytes(using: String.Encoding.utf8)) as Data
-        
+
         return RCTVideoDRM.createCertificateData(certificateStringUrl:certificateUrl, base64Certificate:base64Certificate)
             .then{ certificateData in
                 return RCTVideoDRM.fetchSpcData(
@@ -157,11 +157,22 @@ struct RCTVideoDRM {
                 guard let licenseServer = licenseServer else {
                     throw RCTVideoError.noLicenseServerURL as! Error
                 }
-                return RCTVideoDRM.fetchLicense(
+
+                guard let drmOptions = options, !drmOptions.isEmpty else {
+                    return RCTVideoDRM.fetchLicense(
+                        licenseServer: licenseServer,
+                        spcData: spcData,
+                        contentId: contentId,
+                        headers: headers
+                    )
+                }
+
+                return ResolverManager.instance.fetchLicense(
                     licenseServer: licenseServer,
                     spcData: spcData,
                     contentId: contentId,
-                    headers: headers
+                    headers: headers,
+                    options: drmOptions
                 )
             }
     }
