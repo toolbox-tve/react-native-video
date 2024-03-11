@@ -1,17 +1,27 @@
 import type {Component, RefObject, ComponentClass} from 'react';
 import {Image, findNodeHandle} from 'react-native';
 import type {ImageSourcePropType} from 'react-native';
-import type {ReactVideoSource} from './types/video';
+import type {ReactVideoSource, ReactVideoSourceProperties} from './types/video';
 
 type Source = ImageSourcePropType | ReactVideoSource;
 
-export function resolveAssetSourceForVideo(source: Source): ReactVideoSource {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function generateHeaderForNative(obj?: Record<string, any>) {
+  if (!obj) {
+    return [];
+  }
+  return Object.entries(obj).map(([key, value]) => ({key, value}));
+}
+
+export function resolveAssetSourceForVideo(
+  source: Source,
+): ReactVideoSourceProperties {
   if (typeof source === 'number') {
     return {
       uri: Image.resolveAssetSource(source).uri,
     };
   }
-  return source as ReactVideoSource;
+  return source as ReactVideoSourceProperties;
 }
 
 export function getReactTag(

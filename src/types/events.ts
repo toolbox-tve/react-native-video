@@ -1,22 +1,28 @@
 import type {
+  OnAudioFocusChangedData,
+  OnAudioTracksData,
   OnBandwidthUpdateData,
   OnBufferData,
+  OnExternalPlaybackChangeData,
   OnLoadData,
   OnLoadStartData,
-  OnProgressData,
-  OnSeekData,
-  OnPlaybackData,
-  OnExternalPlaybackChangeData,
   OnPictureInPictureStatusChangedData,
-  OnReceiveAdEventData,
-  OnVideoErrorData,
+  OnPlaybackData,
   OnPlaybackStateChangedData,
-  OnAudioFocusChangedData,
-  OnTimedMetadataData,
-  OnAudioTracksData,
+  OnProgressData,
+  OnReceiveAdEventData,
+  OnSeekData,
+  OnTextTrackDataChangedData,
   OnTextTracksData,
+  OnTimedMetadataData,
+  OnVideoAspectRatioData,
+  OnVideoErrorData,
   OnVideoTracksData,
-} from '../VideoNativeComponent';
+  OnVolumeChangeData,
+} from '../specs/VideoNativeComponent';
+
+export type AudioTrack = OnAudioTracksData['audioTracks'][number];
+export type TextTrack = OnTextTracksData['textTracks'][number];
 
 export interface ReactVideoEvents {
   onAudioBecomingNoisy?: () => void; //Android, iOS
@@ -37,14 +43,17 @@ export interface ReactVideoEvents {
     e: OnPictureInPictureStatusChangedData,
   ) => void; //iOS
   onPlaybackRateChange?: (e: OnPlaybackData) => void; //All
+  onVolumeChange?: (e: OnVolumeChangeData) => void; //Android, iOS
   onProgress?: (e: OnProgressData) => void; //All
-  onReadyForDisplay?: () => void; //Android, iOS, Web
+  onReadyForDisplay?: () => void; //Android, iOS
   onReceiveAdEvent?: (e: OnReceiveAdEventData) => void; //Android, iOS
   onRestoreUserInterfaceForPictureInPictureStop?: () => void; //iOS
   onSeek?: (e: OnSeekData) => void; //Android, iOS, Windows UWP
-  onPlaybackStateChanged?: (e: OnPlaybackStateChangedData) => void; // Android
+  onPlaybackStateChanged?: (e: OnPlaybackStateChangedData) => void; // Android, iOS
   onTimedMetadata?: (e: OnTimedMetadataData) => void; //Android, iOS
   onAudioTracks?: (e: OnAudioTracksData) => void; // Android
   onTextTracks?: (e: OnTextTracksData) => void; //Android
+  onTextTrackDataChanged?: (e: OnTextTrackDataChangedData) => void; // iOS
   onVideoTracks?: (e: OnVideoTracksData) => void; //Android
+  onAspectRatio?: (e: OnVideoAspectRatioData) => void;
 }

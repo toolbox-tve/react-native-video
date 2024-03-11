@@ -1,31 +1,37 @@
 package com.brentvatne.common.react;
 
 import androidx.annotation.StringDef;
+
 import android.view.View;
 
-import com.brentvatne.common.API.TimedMetadata;
-import com.brentvatne.common.API.Track;
-import com.brentvatne.common.API.VideoTrack;
+import com.brentvatne.common.api.TimedMetadata;
+import com.brentvatne.common.api.Track;
+import com.brentvatne.common.api.VideoTrack;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.UIManager;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.uimanager.UIManagerHelper;
+import com.facebook.react.uimanager.common.ViewUtil;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
+import com.google.ads.interactivemedia.v3.api.AdError;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.io.StringWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class VideoEventEmitter {
 
-    private final RCTEventEmitter eventEmitter;
+    private final ReactContext mReactContext;
 
     private int viewId = View.NO_ID;
 
     public VideoEventEmitter(ReactContext reactContext) {
-        this.eventEmitter = reactContext.getJSModule(RCTEventEmitter.class);
+        this.mReactContext = reactContext;
     }
 
     private static final String EVENT_LOAD_START = "onVideoLoadStart";
@@ -50,8 +56,11 @@ public class VideoEventEmitter {
     private static final String EVENT_AUDIO_BECOMING_NOISY = "onVideoAudioBecomingNoisy";
     private static final String EVENT_AUDIO_FOCUS_CHANGE = "onAudioFocusChanged";
     private static final String EVENT_PLAYBACK_RATE_CHANGE = "onPlaybackRateChange";
+    private static final String EVENT_VOLUME_CHANGE = "onVolumeChange";
     private static final String EVENT_AUDIO_TRACKS = "onAudioTracks";
     private static final String EVENT_TEXT_TRACKS = "onTextTracks";
+
+    private static final String EVENT_TEXT_TRACK_DATA_CHANGED = "onTextTrackDataChanged";
     private static final String EVENT_VIDEO_TRACKS = "onVideoTracks";
     private static final String EVENT_ON_RECEIVE_AD_EVENT = "onReceiveAdEvent";
 
@@ -76,8 +85,10 @@ public class VideoEventEmitter {
             EVENT_AUDIO_BECOMING_NOISY,
             EVENT_AUDIO_FOCUS_CHANGE,
             EVENT_PLAYBACK_RATE_CHANGE,
+            EVENT_VOLUME_CHANGE,
             EVENT_AUDIO_TRACKS,
             EVENT_TEXT_TRACKS,
+            EVENT_TEXT_TRACK_DATA_CHANGED,
             EVENT_VIDEO_TRACKS,
             EVENT_BANDWIDTH,
             EVENT_ON_RECEIVE_AD_EVENT
@@ -105,8 +116,10 @@ public class VideoEventEmitter {
             EVENT_AUDIO_BECOMING_NOISY,
             EVENT_AUDIO_FOCUS_CHANGE,
             EVENT_PLAYBACK_RATE_CHANGE,
+            EVENT_VOLUME_CHANGE,
             EVENT_AUDIO_TRACKS,
             EVENT_TEXT_TRACKS,
+            EVENT_TEXT_TRACK_DATA_CHANGED,
             EVENT_VIDEO_TRACKS,
             EVENT_BANDWIDTH,
             EVENT_ON_RECEIVE_AD_EVENT
@@ -121,8 +134,6 @@ public class VideoEventEmitter {
     private static final String EVENT_PROP_STEP_FORWARD = "canStepForward";
     private static final String EVENT_PROP_STEP_BACKWARD = "canStepBackward";
 
-    private static final String EVENT_PROP_BUFFER_START = "bufferStart";
-    private static final String EVENT_PROP_BUFFER_END = "bufferEnd";
     private static final String EVENT_PROP_DURATION = "duration";
     private static final String EVENT_PROP_PLAYABLE_DURATION = "playableDuration";
     private static final String EVENT_PROP_SEEKABLE_DURATION = "seekableDuration";
@@ -137,9 +148,11 @@ public class VideoEventEmitter {
     private static final String EVENT_PROP_VIDEO_TRACKS = "videoTracks";
     private static final String EVENT_PROP_AUDIO_TRACKS = "audioTracks";
     private static final String EVENT_PROP_TEXT_TRACKS = "textTracks";
+    private static final String EVENT_PROP_TEXT_TRACK_DATA = "subtitleTracks";
     private static final String EVENT_PROP_HAS_AUDIO_FOCUS = "hasAudioFocus";
     private static final String EVENT_PROP_IS_BUFFERING = "isBuffering";
     private static final String EVENT_PROP_PLAYBACK_RATE = "playbackRate";
+    private static final String EVENT_PROP_VOLUME = "volume";
 
     private static final String EVENT_PROP_ERROR = "error";
     private static final String EVENT_PROP_ERROR_STRING = "errorString";
@@ -237,8 +250,7 @@ public class VideoEventEmitter {
         load( duration,  currentPosition,  videoWidth,  videoHeight, waAudioTracks,  waTextTracks,  waVideoTracks, trackId);
     }
 
-
-    public void load(double duration, double currentPosition, int videoWidth, int videoHeight,
+    void load(double duration, double currentPosition, int videoWidth, int videoHeight,
               WritableArray audioTracks, WritableArray textTracks, WritableArray videoTracks, String trackId) {
         WritableMap event = Arguments.createMap();
         event.putDouble(EVENT_PROP_DURATION, duration / 1000D);
@@ -263,8 +275,6 @@ public class VideoEventEmitter {
         receiveEvent(EVENT_LOAD, event);
     }
 
-
-
     WritableMap arrayToObject(String field, WritableArray array) {
         WritableMap event = Arguments.createMap();
         event.putArray(field, array);
@@ -277,6 +287,12 @@ public class VideoEventEmitter {
 
     public void textTracks(ArrayList<Track> textTracks){
         receiveEvent(EVENT_TEXT_TRACKS, arrayToObject(EVENT_PROP_TEXT_TRACKS, textTracksToArray(textTracks)));
+    }
+
+    public void textTrackDataChanged(String textTrackData){
+        WritableMap event = Arguments.createMap();
+        event.putString(EVENT_PROP_TEXT_TRACK_DATA, textTrackData);
+        receiveEvent(EVENT_TEXT_TRACK_DATA_CHANGED, event);
     }
 
     public void videoTracks(ArrayList<VideoTrack> videoTracks){
@@ -379,6 +395,11 @@ public class VideoEventEmitter {
         receiveEvent(EVENT_PLAYBACK_RATE_CHANGE, map);
     }
 
+    public void volumeChange(float volume) {
+        WritableMap map = Arguments.createMap();
+        map.putDouble(EVENT_PROP_VOLUME, volume);
+        receiveEvent(EVENT_VOLUME_CHANGE, map);
+    }
 
     public void timedMetadata(ArrayList<TimedMetadata> _metadataArrayList) {
         if (_metadataArrayList.size() == 0) {
@@ -408,6 +429,19 @@ public class VideoEventEmitter {
         receiveEvent(EVENT_AUDIO_BECOMING_NOISY, null);
     }
 
+    public void receiveAdEvent(String event, Map<String, String> data) {
+        WritableMap map = Arguments.createMap();
+        map.putString("event", event);
+
+        WritableMap dataMap = Arguments.createMap();
+        for (Map.Entry<String, String> entry : data.entrySet()) {
+            dataMap.putString(entry.getKey(), entry.getValue());
+        }
+        map.putMap("data", dataMap);
+
+        receiveEvent(EVENT_ON_RECEIVE_AD_EVENT, map);
+    }
+
     public void receiveAdEvent(String event) {
         WritableMap map = Arguments.createMap();
         map.putString("event", event);
@@ -415,7 +449,24 @@ public class VideoEventEmitter {
         receiveEvent(EVENT_ON_RECEIVE_AD_EVENT, map);
     }
 
+    public void receiveAdErrorEvent(AdError error) {
+        WritableMap map = Arguments.createMap();
+        map.putString("event", "ERROR");
+
+        WritableMap dataMap = Arguments.createMap();
+        dataMap.putString("message", error.getMessage());
+        dataMap.putString("code", String.valueOf(error.getErrorCode()));
+        dataMap.putString("type", String.valueOf(error.getErrorType()));
+        map.putMap("data", dataMap);
+
+        receiveEvent(EVENT_ON_RECEIVE_AD_EVENT, map);
+    }
+
     private void receiveEvent(@VideoEvents String type, WritableMap event) {
-        eventEmitter.receiveEvent(viewId, type, event);
+        UIManager uiManager = UIManagerHelper.getUIManager(mReactContext, ViewUtil.getUIManagerType(viewId));
+
+        if(uiManager != null) {
+           uiManager.receiveEvent(UIManagerHelper.getSurfaceId(mReactContext), viewId, type, event);
+        }
     }
 }
