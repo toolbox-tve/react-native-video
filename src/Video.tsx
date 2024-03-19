@@ -1,4 +1,4 @@
-import React, {
+ import React, {
   useState,
   useCallback,
   useMemo,
@@ -60,6 +60,7 @@ export interface VideoRef {
 const Video = forwardRef<VideoRef, ReactVideoProps>(
   (
     {
+      useHeadersAsDictionary = true,
       source,
       style,
       resizeMode,
@@ -170,13 +171,14 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
       return {
         type: drm.type,
         licenseServer: drm.licenseServer,
-        headers: generateHeaderForNative(drm.headers),
+        headers: generateHeaderForNative(drm.headers,useHeadersAsDictionary),
         contentId: drm.contentId,
         certificateUrl: drm.certificateUrl,
         base64Certificate: drm.base64Certificate,
         useExternalGetLicense: !!drm.getLicense,
+        options: drm.options
       };
-    }, [drm]);
+    }, [drm,useHeadersAsDictionary]);
 
     const _selectedTextTrack = useMemo(() => {
       if (!selectedTextTrack) {

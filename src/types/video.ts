@@ -51,6 +51,7 @@ export type Drm = Readonly<{
   contentId?: string; // ios
   certificateUrl?: string; // ios
   base64Certificate?: boolean; // ios default: false
+  options?: Record<string,string>, //ios
   /* eslint-disable @typescript-eslint/no-unused-vars */
   getLicense?: (
     licenseUrl: string,
@@ -179,6 +180,7 @@ export type AudioOutput = 'speaker' | 'earpiece';
 export interface ReactVideoProps extends ReactVideoEvents, ViewProps {
   source?: ReactVideoSource;
   drm?: Drm;
+  useHeadersAsDictionary?: boolean,
   style?: StyleProp<ViewStyle>;
   adTagUrl?: string;
   audioOnly?: boolean;

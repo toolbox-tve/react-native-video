@@ -6,10 +6,16 @@ import type {ReactVideoSource, ReactVideoSourceProperties} from './types/video';
 type Source = ImageSourcePropType | ReactVideoSource;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function generateHeaderForNative(obj?: Record<string, any>) {
+export function generateHeaderForNative(obj?: Record<string, any>, useHeadersAsDictionary?: boolean) {
   if (!obj) {
     return [];
   }
+
+  if(useHeadersAsDictionary && obj){
+    return obj
+  }
+
+
   return Object.entries(obj).map(([key, value]) => ({key, value}));
 }
 

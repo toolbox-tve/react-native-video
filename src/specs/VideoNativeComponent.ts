@@ -18,7 +18,7 @@ type Headers = ReadonlyArray<
     key: string;
     value: string;
   }>
->;
+> | Record<string,string>;
 
 export type VideoSrc = Readonly<{
   uri?: string;
