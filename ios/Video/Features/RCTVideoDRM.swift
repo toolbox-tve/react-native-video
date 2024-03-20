@@ -145,7 +145,8 @@ enum RCTVideoDRM {
         licenseServer: String?,
         certificateUrl: String?,
         base64Certificate: Bool?,
-        headers: [String: Any]?
+        headers: [String: Any]?,
+        options: [String: Any]?
     ) -> Promise<Data> {
         let url = loadingRequest.request.url
 
@@ -155,23 +156,34 @@ enum RCTVideoDRM {
 
         let contentIdData = NSData(bytes: contentId.cString(using: String.Encoding.utf8), length: contentId.lengthOfBytes(using: String.Encoding.utf8)) as Data
 
-        return RCTVideoDRM.createCertificateData(certificateStringUrl: certificateUrl, base64Certificate: base64Certificate)
-            .then { certificateData in
+        return RCTVideoDRM.createCertificateData(certificateStringUrl:certificateUrl, base64Certificate:base64Certificate)
+            .then{ certificateData in
                 return RCTVideoDRM.fetchSpcData(
-                    loadingRequest: loadingRequest,
-                    certificateData: certificateData,
-                    contentIdData: contentIdData
+                    loadingRequest:loadingRequest,
+                    certificateData:certificateData,
+                    contentIdData:contentIdData
                 )
             }
-            .then { spcData -> Promise<Data> in
-                guard let licenseServer else {
+            .then{ spcData -> Promise<Data> in
+                guard let licenseServer = licenseServer else {
                     throw RCTVideoError.noLicenseServerURL as! Error
                 }
-                return RCTVideoDRM.fetchLicense(
+
+                guard let drmOptions = options, !drmOptions.isEmpty else {
+                    return RCTVideoDRM.fetchLicense(
+                        licenseServer: licenseServer,
+                        spcData: spcData,
+                        contentId: contentId,
+                        headers: headers
+                    )
+                }
+                
+                return ResolverManager.instance.fetchLicense(
                     licenseServer: licenseServer,
                     spcData: spcData,
                     contentId: contentId,
-                    headers: headers
+                    headers: headers,
+                    options: drmOptions
                 )
             }
     }
