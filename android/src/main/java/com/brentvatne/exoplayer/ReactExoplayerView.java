@@ -324,7 +324,10 @@ public class ReactExoplayerView extends FrameLayout implements
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        initializePlayer();
+        //Avoid recreate session drm if drmSessionManager was already created
+        if(this.drmUUID.toString().isEmpty()){
+            initializePlayer();
+        }
     }
 
     @Override
@@ -770,7 +773,8 @@ public class ReactExoplayerView extends FrameLayout implements
             DefaultDrmSessionManager drmSessionManager = new DefaultDrmSessionManager.Builder()
                     .setUuidAndExoMediaDrmProvider(uuid, (_uuid) -> mediaDrm)
                     .setKeyRequestParameters(null)
-                    .setMultiSession(false)
+                    //TODO: allow multisession dynamic by react prop
+                    .setMultiSession(true)
                     .build(drmCallback);
             return drmSessionManager;
         } catch (UnsupportedDrmException ex) {
@@ -1455,10 +1459,15 @@ public class ReactExoplayerView extends FrameLayout implements
             case PlaybackException.ERROR_CODE_DRM_PROVISIONING_FAILED:
             case PlaybackException.ERROR_CODE_DRM_SYSTEM_ERROR:
             case PlaybackException.ERROR_CODE_DRM_UNSPECIFIED:
+            case PlaybackException.ERROR_CODE_DRM_CONTENT_ERROR:
+            case PlaybackException.ERROR_CODE_DRM_SCHEME_UNSUPPORTED:
+            case PlaybackException.ERROR_CODE_DECODING_FAILED:
+            case PlaybackException.ERROR_CODE_DECODER_INIT_FAILED:
+            case PlaybackException.ERROR_CODE_DRM_LICENSE_EXPIRED:
                 if (!hasDrmFailed) {
                     // When DRM fails to reach the app level certificate server it will fail with a source error so we assume that it is DRM related and try one more time
                     hasDrmFailed = true;
-                    playerNeedsSource = true;
+                    playe4rNeedsSource = true;
                     updateResumePosition();
                     initializePlayer();
                     setPlayWhenReady(true);
