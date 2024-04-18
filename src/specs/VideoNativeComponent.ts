@@ -443,6 +443,7 @@ export interface VideoNativeProps extends ViewProps {
   selectedAudioTrack?: SelectedAudioTrack;
   selectedVideoTrack?: SelectedVideoTrack; // android
   paused?: boolean;
+  fullscreenViewId?: number;
   muted?: boolean;
   controls?: boolean;
   filter?: WithDefault<

@@ -10,13 +10,16 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.accessibility.CaptioningManager;
 import android.widget.FrameLayout;
@@ -164,6 +167,7 @@ public class ReactExoplayerView extends FrameLayout implements
 
     private DataSource.Factory mediaDataSourceFactory;
     private ExoPlayer player;
+    private ViewGroup parent;
     private DefaultTrackSelector trackSelector;
     private boolean playerNeedsSource;
 
@@ -325,7 +329,7 @@ public class ReactExoplayerView extends FrameLayout implements
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         //Avoid recreate session drm if drmSessionManager was already created
-        if(this.drmUUID.toString().isEmpty()){
+        if(this.drmUUID != null && this.drmUUID.toString().isEmpty()){
             initializePlayer();
         }
     }
@@ -1467,7 +1471,7 @@ public class ReactExoplayerView extends FrameLayout implements
                 if (!hasDrmFailed) {
                     // When DRM fails to reach the app level certificate server it will fail with a source error so we assume that it is DRM related and try one more time
                     hasDrmFailed = true;
-                    playe4rNeedsSource = true;
+                    playerNeedsSource = true;
                     updateResumePosition();
                     initializePlayer();
                     setPlayWhenReady(true);
@@ -2119,6 +2123,24 @@ public class ReactExoplayerView extends FrameLayout implements
 
     public void setShutterColor(Integer color) {
         exoPlayerView.setShutterColor(color);
+    }
+
+    public void setFullscreenViewId(int fullscreenViewId){
+        Log.i(">>>>FullscreenViewId", String.valueOf(fullscreenViewId));
+        Activity mainActivity = (Activity) themedReactContext.getCurrentActivity();
+        ViewGroup fullscreenView = (ViewGroup)mainActivity.findViewById(fullscreenViewId);
+
+        parent = (ViewGroup) this.getParent();
+        parent.removeView(this);
+
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.MATCH_PARENT
+        );
+
+        fullscreenView.addView(this,layoutParams);
+        reLayout(this);
+        fullscreenView.requestLayout();
     }
 
     @Override

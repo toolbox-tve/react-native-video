@@ -70,6 +70,7 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
     private static final String PROP_PREVENTS_DISPLAY_SLEEP_DURING_VIDEO_PLAYBACK = "preventsDisplaySleepDuringVideoPlayback";
     private static final String PROP_PROGRESS_UPDATE_INTERVAL = "progressUpdateInterval";
     private static final String PROP_REPORT_BANDWIDTH = "reportBandwidth";
+    private static final String PROP_FULLSCREEN_VIEW_ID = "fullscreenViewId";
     private static final String PROP_SEEK = "seek";
     private static final String PROP_RATE = "rate";
     private static final String PROP_MIN_LOAD_RETRY_COUNT = "minLoadRetryCount";
@@ -344,6 +345,11 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
     @ReactProp(name = PROP_PLAY_IN_BACKGROUND, defaultBoolean = false)
     public void setPlayInBackground(final ReactExoplayerView videoView, final boolean playInBackground) {
         videoView.setPlayInBackground(playInBackground);
+    }
+
+    @ReactProp(name = PROP_FULLSCREEN_VIEW_ID)
+    public void setFullscreenViewId(final ReactExoplayerView videoView, final int fullscreenViewId){
+        videoView.setFullscreenViewId(fullscreenViewId);
     }
 
     @ReactProp(name = PROP_DISABLE_FOCUS, defaultBoolean = false)
