@@ -44,6 +44,8 @@ export enum DRMType {
   FAIRPLAY = 'fairplay',
 }
 
+export type DRMOptions = Record<string,string>;
+
 export type Drm = Readonly<{
   type?: DRMType;
   licenseServer?: string;
@@ -51,7 +53,7 @@ export type Drm = Readonly<{
   contentId?: string; // ios
   certificateUrl?: string; // ios
   base64Certificate?: boolean; // ios default: false
-  options?: Record<string,string>, //ios
+  options?: DRMOptions //ios
   /* eslint-disable @typescript-eslint/no-unused-vars */
   getLicense?: (
     licenseUrl: string,
