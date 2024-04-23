@@ -18,7 +18,7 @@ type Headers = ReadonlyArray<
     key: string;
     value: string;
   }>
-> | Record<string,string>;
+> 
 
 export type VideoSrc = Readonly<{
   uri?: string;
@@ -443,7 +443,7 @@ export interface VideoNativeProps extends ViewProps {
   selectedAudioTrack?: SelectedAudioTrack;
   selectedVideoTrack?: SelectedVideoTrack; // android
   paused?: boolean;
-  fullscreenViewId?: number;
+  fullscreenViewId?: Int32;
   muted?: boolean;
   controls?: boolean;
   filter?: WithDefault<
