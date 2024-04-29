@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Promises
 
 public class TBXResolver: DRMResolverStrategyProtocol {
     public var resolverName: String = "tbx"
@@ -36,7 +35,7 @@ public class TBXResolver: DRMResolverStrategyProtocol {
         return request
     }
     
-    public func fetchLicense(licenseServer: String, spcData: Data?, contentId: String, headers: [String : Any]?, options: [String : Any]?) -> Promises.Promise<Data> {
+    public func fetchLicense(licenseServer: String, spcData: Data?, contentId: String, headers: [String : Any]?, options: [String : Any]?) async throws -> Data {
       let request = createLicenseRequest(licenseServer: licenseServer, spcData: spcData, contentId: contentId, headers: headers)
 
       let (data, response) = try await URLSession.shared.data(from: request)
@@ -44,4 +43,5 @@ public class TBXResolver: DRMResolverStrategyProtocol {
       return data;
     }
 }
+
 

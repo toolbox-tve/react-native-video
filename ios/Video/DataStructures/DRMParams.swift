@@ -41,7 +41,7 @@ struct DRMParams {
 
         if let options = json["options"] as? [[String: Any]] {
             var _options: [String: Any] = [:]
-            for options in options {
+            for option in options {
                 if let key = option["key"] as? String, let value = option["value"] {
                     _options[key] = value
                 }

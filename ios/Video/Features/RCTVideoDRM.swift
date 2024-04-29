@@ -152,13 +152,13 @@ enum RCTVideoDRM {
             throw RCTVideoError.noLicenseServerURL as! Error
         }
 
-        if options, !options.isEmpty {
+        if let drmOptions = options, !drmOptions.isEmpty {
             return try await DRMResolver.instance.fetchLicense(
                 licenseServer: licenseServer,
                 spcData: spcData,
                 contentId: contentId,
                 headers: headers,
-                options: options
+                options: drmOptions
             )
         }
 

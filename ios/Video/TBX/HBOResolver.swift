@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Promises
 
 public class HBOResolver: DRMResolverStrategyProtocol {
     public var resolverName: String = "hbo"
@@ -35,11 +34,11 @@ public class HBOResolver: DRMResolverStrategyProtocol {
         
         xmlRequest.httpBody = getXMLSPCAsString(spcData: spcData!).data(using: .utf8)
         
-        print(xmlRequest.cURL(pretty: true))
+        //print(xmlRequest.cURL(pretty: true))
         return xmlRequest
     }
     
-    public func fetchLicense(licenseServer: String, spcData: Data?, contentId: String, headers: [String : Any]?, options: [String : Any]?) -> Promises.Promise<Data> {
+    public func fetchLicense(licenseServer: String, spcData: Data?, contentId: String, headers: [String : Any]?, options: [String : Any]?) async throws -> Data{
         let countryID = options!["countryID"] as! String
         let operatorID = options!["operatorID"] as! String
         let paseoToken = options!["paseoToken"] as! String
@@ -48,7 +47,9 @@ public class HBOResolver: DRMResolverStrategyProtocol {
         
         let request = createLicenseRequest(licenseServer:licenseServer, spcData:spcData, contentId:contentId, headers:hboHeaders)
         
-        return Promise<Data>(on: .global()) { fulfill, reject in
+        return Data()
+        
+        /*return Promise<Data>(on: .global()) { fulfill, reject in
             let postDataTask = URLSession.shared.dataTask(with: request as URLRequest, completionHandler:{ (data:Data!,response:URLResponse!,error:Error!) in
                 
                 let httpResponse:HTTPURLResponse! = (response as! HTTPURLResponse)
@@ -77,14 +78,14 @@ public class HBOResolver: DRMResolverStrategyProtocol {
                 fulfill(ckcData!)
             })
             postDataTask.resume()
-        }
+        }*/
     }
     
     //MARK: Private Methods:
     
     func getCustomHeaderBase64(_ paseoToken: String,_ skd: String, _ operatorID: String, _ countryID: String) -> String {
         let headerPayload: String = "tokenID=\(paseoToken)|skd://\(skd)|operatorID=\(operatorID)|countryID=\(countryID)"
-        return headerPayload.toBase64()
+        return headerPayload
     }
     
     func getXMLSPCAsString(spcData: Data) -> String {

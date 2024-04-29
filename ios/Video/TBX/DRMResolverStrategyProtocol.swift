@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Promises
 
 public protocol DRMResolverStrategyProtocol {
     var resolverName: String { get }
@@ -33,5 +32,6 @@ public protocol DRMResolverStrategyProtocol {
         contentId: String,
         headers: [String:Any]?,
         options: [String:Any]?
-    ) -> Promise<Data>
+    ) async throws
+     -> Data
 }

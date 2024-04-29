@@ -6,22 +6,21 @@
 //
 
 import Foundation
-import Promises
 
 class DRMResolver {
     static var instance = DRMResolver()
 
-    private let resolvers: [ResolverStrategyProtocol] = [
+    private let resolvers: [DRMResolverStrategyProtocol] = [
       HBOResolver()
     ]
     
-    func fetchLicense(licenseServer: String, spcData: Data?, contentId: String, headers: [String : Any]?, options: [String: Any]?) -> Promises.Promise<Data> {
+    func fetchLicense(licenseServer: String, spcData: Data?, contentId: String, headers: [String : Any]?, options: [String: Any]?) async throws -> Data {
       let network = options!["network"] as! String
       let provider = options!["provider"] as! String
       let strategy = resolvers.filter { $0.canResolve(network, provider) }.first ?? TBXResolver()
       
       print("[TBPlayer/FAIRPLAY]] >>>> USE \(strategy.resolverName) RESOLVER.")
       
-      return strategy.fetchLicense(licenseServer: licenseServer, spcData: spcData, contentId: contentId, headers: headers, options: options)
+      return try await strategy.fetchLicense(licenseServer: licenseServer, spcData: spcData, contentId: contentId, headers: headers, options: options)
     }
 }

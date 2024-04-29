@@ -6,6 +6,8 @@ import type FilterType from './FilterType';
 
 export type Headers = Record<string, string>;
 
+export type Options = Record<string, string>;
+
 export type EnumValues<T extends string | number> = T extends string
   ? `${T}` | T
   : T;
@@ -50,6 +52,7 @@ export type Drm = Readonly<{
   type?: DRMType;
   licenseServer?: string;
   headers?: Headers;
+  options?: Options;
   contentId?: string; // ios
   certificateUrl?: string; // ios
   base64Certificate?: boolean; // ios default: false

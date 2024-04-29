@@ -915,6 +915,29 @@ class RCTVideo: UIView, RCTVideoPlayerViewControllerDelegate, RCTPlayerObserverH
     }
 
     @objc
+    func setFullscreenViewId(_ fullscreenViewId: NSNumber){
+        DispatchQueue.main.async { [weak self] in
+            guard fullscreenViewId != -1 else {
+                self?.usePlayerLayer()
+                return
+            }
+            
+            guard let self else {
+                return
+            }
+            
+            guard let view = _eventDispatcher?.bridge.uiManager.view(forReactTag: fullscreenViewId) as? UIView else {
+                print("Invalid view returned from registry, expecting UIView")
+                return
+            }
+            
+            if let playerLayer = _playerLayer {
+                view.layer.addSublayer(playerLayer)
+            }
+        }
+    }
+
+    @objc
     func setFullscreen(_ fullscreen: Bool) {
         if fullscreen && !_fullscreenPlayerPresented && _player != nil {
             // Ensure player view controller is not null
