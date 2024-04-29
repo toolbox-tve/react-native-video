@@ -7,7 +7,16 @@ import React, {
   useImperativeHandle,
   type ComponentRef,
 } from 'react';
-import {View, StyleSheet, Image, Platform} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Platform,
+  type StyleProp,
+  type ImageStyle,
+  type NativeSyntheticEvent,
+} from 'react-native';
+
 import NativeVideoComponent, {
   type OnAudioFocusChangedData,
   type OnAudioTracksData,
@@ -15,15 +24,12 @@ import NativeVideoComponent, {
   type OnBufferData,
   type OnExternalPlaybackChangeData,
   type OnGetLicenseData,
-  type OnLoadData,
   type OnLoadStartData,
   type OnPictureInPictureStatusChangedData,
   type OnPlaybackStateChangedData,
   type OnProgressData,
-  type OnReceiveAdEventData,
   type OnSeekData,
   type OnTextTrackDataChangedData,
-  type OnTextTracksData,
   type OnTimedMetadataData,
   type OnVideoAspectRatioData,
   type OnVideoErrorData,
@@ -31,15 +37,18 @@ import NativeVideoComponent, {
   type VideoComponentType,
   type VideoSrc,
 } from './specs/VideoNativeComponent';
-
-import type {StyleProp, ImageStyle, NativeSyntheticEvent} from 'react-native';
 import {
   generateHeaderForNative,
   getReactTag,
   resolveAssetSourceForVideo,
 } from './utils';
 import {VideoManager} from './specs/VideoNativeComponent';
-import type {ReactVideoProps} from './types/video';
+import type {
+  OnLoadData,
+  OnTextTracksData,
+  OnReceiveAdEventData,
+  ReactVideoProps,
+} from './types';
 
 export type VideoSaveData = {
   uri: string;
@@ -112,6 +121,8 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
       setRestoreUserInterfaceForPIPStopCompletionHandler,
     ] = useState<boolean | undefined>();
 
+    const hasPoster = !!poster;
+
     const posterStyle = useMemo<StyleProp<ImageStyle>>(
       () => ({
         ...StyleSheet.absoluteFillObject,
@@ -135,7 +146,7 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
       if (!uri) {
         console.log('Trying to load empty source');
       }
-      const isNetwork = !!(uri && uri.match(/^https?:/));
+      const isNetwork = !!(uri && uri.match(/^(rtp|rtsp|http|https):/));
       const isAsset = !!(
         uri &&
         uri.match(
@@ -210,10 +221,13 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
       if (!selectedVideoTrack) {
         return;
       }
+      const value = selectedVideoTrack?.value
+        ? `${selectedVideoTrack.value}`
+        : undefined;
 
       return {
         type: selectedVideoTrack?.type,
-        value: selectedVideoTrack?.value,
+        value,
       };
     }, [selectedVideoTrack]);
 
@@ -227,19 +241,22 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
         return;
       }
 
+      const callSeekFunction = () => {
+        VideoManager.seek(
+          {
+            time,
+            tolerance: tolerance || 0,
+          },
+          getReactTag(nativeRef),
+        );
+      };
+
       Platform.select({
-        ios: () => {
-          nativeRef.current?.setNativeProps({
-            seek: {
-              time,
-              tolerance: tolerance || 0,
-            },
-          });
-        },
+        ios: callSeekFunction,
+        android: callSeekFunction,
         default: () => {
-          nativeRef.current?.setNativeProps({
-            seek: time,
-          });
+          // TODO: Implement VideoManager.seek for windows
+          nativeRef.current?.setNativeProps({seek: time});
         },
       })();
     }, []);
@@ -274,19 +291,20 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
 
     const onVideoLoadStart = useCallback(
       (e: NativeSyntheticEvent<OnLoadStartData>) => {
+        hasPoster && setShowPoster(true);
         onLoadStart?.(e.nativeEvent);
       },
-      [onLoadStart],
+      [hasPoster, onLoadStart],
     );
 
     const onVideoLoad = useCallback(
       (e: NativeSyntheticEvent<OnLoadData>) => {
         if (Platform.OS === 'windows') {
-          setShowPoster(false);
+          hasPoster && setShowPoster(false);
         }
         onLoad?.(e.nativeEvent);
       },
-      [onLoad, setShowPoster],
+      [onLoad, hasPoster, setShowPoster],
     );
 
     const onVideoError = useCallback(
@@ -376,9 +394,9 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
     );
 
     const _onReadyForDisplay = useCallback(() => {
-      setShowPoster(false);
+      hasPoster && setShowPoster(false);
       onReadyForDisplay?.();
-    }, [setShowPoster, onReadyForDisplay]);
+    }, [setShowPoster, hasPoster, onReadyForDisplay]);
 
     const _onPictureInPictureStatusChanged = useCallback(
       (e: NativeSyntheticEvent<OnPictureInPictureStatusChangedData>) => {
@@ -429,15 +447,18 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
       [onAspectRatio],
     );
 
+    const useExternalGetLicense = drm?.getLicense instanceof Function;
+
     const onGetLicense = useCallback(
       (event: NativeSyntheticEvent<OnGetLicenseData>) => {
-        if (drm && drm.getLicense instanceof Function) {
+        if (useExternalGetLicense) {
           const data = event.nativeEvent;
           if (data && data.spcBase64) {
             const getLicenseOverride = drm.getLicense(
               data.spcBase64,
               data.contentId,
               data.licenseUrl,
+              data.loadedLicenseUrl,
             );
             const getLicensePromise = Promise.resolve(getLicenseOverride); // Handles both scenarios, getLicenseOverride being a promise and not.
             getLicensePromise
@@ -446,14 +467,14 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
                   nativeRef.current &&
                     VideoManager.setLicenseResult(
                       result,
-                      data.licenseUrl,
+                      data.loadedLicenseUrl,
                       getReactTag(nativeRef),
                     );
                 } else {
                   nativeRef.current &&
                     VideoManager.setLicenseResultError(
                       'Empty license result',
-                      data.licenseUrl,
+                      data.loadedLicenseUrl,
                       getReactTag(nativeRef),
                     );
                 }
@@ -462,20 +483,20 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
                 nativeRef.current &&
                   VideoManager.setLicenseResultError(
                     'fetch error',
-                    data.licenseUrl,
+                    data.loadedLicenseUrl,
                     getReactTag(nativeRef),
                   );
               });
           } else {
             VideoManager.setLicenseResultError(
               'No spc received',
-              data.licenseUrl,
+              data.loadedLicenseUrl,
               getReactTag(nativeRef),
             );
           }
         }
       },
-      [drm],
+      [drm, useExternalGetLicense],
     );
 
     useImperativeHandle(
@@ -517,8 +538,8 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
           selectedTextTrack={_selectedTextTrack}
           selectedAudioTrack={_selectedAudioTrack}
           selectedVideoTrack={_selectedVideoTrack}
-          onGetLicense={onGetLicense}
-          onVideoLoad={onVideoLoad}
+          onGetLicense={useExternalGetLicense ? onGetLicense : undefined}
+          onVideoLoad={onVideoLoad as (e: NativeSyntheticEvent<object>) => void}
           onVideoLoadStart={onVideoLoadStart}
           onVideoError={onVideoError}
           onVideoProgress={onVideoProgress}
@@ -548,9 +569,11 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
             onRestoreUserInterfaceForPictureInPictureStop
           }
           onVideoAspectRatio={_onVideoAspectRatio}
-          onReceiveAdEvent={_onReceiveAdEvent}
+          onReceiveAdEvent={
+            _onReceiveAdEvent as (e: NativeSyntheticEvent<object>) => void
+          }
         />
-        {showPoster ? (
+        {hasPoster && showPoster ? (
           <Image style={posterStyle} source={{uri: poster}} />
         ) : null}
       </View>

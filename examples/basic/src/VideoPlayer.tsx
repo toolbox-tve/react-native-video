@@ -34,7 +34,11 @@ import Video, {
   SelectedTrack,
   DRMType,
   OnTextTrackDataChangedData,
-  SelectedTrackType,
+  TextTrackType,
+  ISO639_1,
+  OnSeekData,
+  OnPlaybackStateChangedData,
+  OnPlaybackRateChangeData,
 } from 'react-native-video';
 import ToggleControl from './ToggleControl';
 import MultiValueControl, {
@@ -65,6 +69,7 @@ interface StateType {
   srcListId: number;
   loop: boolean;
   showRNVControls: boolean;
+  poster?: string;
 }
 
 class VideoPlayer extends Component {
@@ -92,12 +97,20 @@ class VideoPlayer extends Component {
     srcListId: 0,
     loop: false,
     showRNVControls: false,
+    poster: undefined,
   };
 
   seekerWidth = 0;
 
   srcAllPlatformList = [
-    require('./broadchurch.mp4'),
+    {
+      description: 'local file landscape',
+      uri: require('./broadchurch.mp4'),
+    },
+    {
+      description: 'local file portrait',
+      uri: require('./portrait.mp4'),
+    },
     {
       description: '(hls|live) red bull tv',
       uri: 'https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master_928.m3u8',
@@ -123,6 +136,25 @@ class VideoPlayer extends Component {
     {
       description: 'sintel with subtitles',
       uri: 'https://bitmovin-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+    },
+    {
+      description: 'sintel starts at 20sec',
+      uri: 'https://bitmovin-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+      startPosition: 50000,
+    },
+    {
+      description: 'BigBugBunny sideLoaded subtitles',
+      // sideloaded subtitles wont work for streaming like HLS on ios
+      // mp4
+      uri: 'https://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4',
+      textTracks: [
+        {
+          title: 'test',
+          language: 'en' as ISO639_1,
+          type: TextTrackType.VTT,
+          uri: 'https://bitdash-a.akamaihd.net/content/sintel/subtitles/subtitles_en.vtt',
+        },
+      ],
     },
   ];
 
@@ -170,7 +202,16 @@ class VideoPlayer extends Component {
           'https://proxy.uat.widevine.com/proxy?provider=widevine_test',
       },
     },
+    {
+      description: 'rtsp big bug bunny',
+      uri: 'rtsp://rtspstream:3cfa3c36a9c00f4aa38f3cd35816b287@zephyr.rtsp.stream/movie',
+      type: 'rtsp',
+    },
   ];
+
+  // poster which can be displayed
+  samplePoster =
+    'https://upload.wikimedia.org/wikipedia/commons/1/18/React_Native_Logo.png';
 
   srcList = this.srcAllPlatformList.concat(
     Platform.OS === 'android' ? this.srcAndroidList : this.srcIosList,
@@ -205,12 +246,24 @@ class VideoPlayer extends Component {
     this.onTextTracks(data);
   };
 
-  onProgress = (data: OnProgressData) => {
-    if (!this.state.seeking) {
+  updateSeeker = () => {
+    // put this code in timeout as because it may be put just after a setState
+    setTimeout(() => {
       const position = this.calculateSeekerPosition();
       this.setSeekerPosition(position);
-    }
+    }, 1);
+  };
+
+  onProgress = (data: OnProgressData) => {
     this.setState({currentTime: data.currentTime});
+    if (!this.state.seeking) {
+      this.updateSeeker();
+    }
+  };
+
+  onSeek = (data: OnSeekData) => {
+    this.setState({currentTime: data.currentTime});
+    this.updateSeeker();
   };
 
   onVideoLoadStart = () => {
@@ -222,15 +275,17 @@ class VideoPlayer extends Component {
     const selectedTrack = data.audioTracks?.find((x: AudioTrack) => {
       return x.selected;
     });
-    this.setState({
-      audioTracks: data.audioTracks,
-    });
     if (selectedTrack?.language) {
       this.setState({
+        audioTracks: data.audioTracks,
         selectedAudioTrack: {
           type: 'language',
           value: selectedTrack?.language,
         },
+      });
+    } else {
+      this.setState({
+        audioTracks: data.audioTracks,
       });
     }
   };
@@ -240,16 +295,17 @@ class VideoPlayer extends Component {
       return x?.selected;
     });
 
-    this.setState({
-      textTracks: data.textTracks,
-    });
     if (selectedTrack?.language) {
       this.setState({
-        textTracks: data,
+        textTracks: data.textTracks,
         selectedTextTrack: {
           type: 'language',
           value: selectedTrack?.language,
         },
+      });
+    } else {
+      this.setState({
+        textTracks: data.textTracks,
       });
     }
   };
@@ -313,7 +369,17 @@ class VideoPlayer extends Component {
   };
 
   onEnd = () => {
-    this.channelUp();
+    if (!this.state.loop) {
+      this.channelUp();
+    }
+  };
+
+  onPlaybackRateChange = (data: OnPlaybackRateChangeData) => {
+    console.log('onPlaybackRateChange', data);
+  };
+
+  onPlaybackStateChanged = (data: OnPlaybackStateChangedData) => {
+    console.log('onPlaybackStateChanged', data);
   };
 
   toggleFullscreen() {
@@ -538,8 +604,8 @@ class VideoPlayer extends Component {
 
   renderTopControl() {
     return (
-      <>
-        <Text style={[styles.controlOption]}>
+      <View style={styles.topControlsContainer}>
+        <Text style={styles.controlOption}>
           {this.srcList[this.state.srcListId]?.description || 'local file'}
         </Text>
         <View>
@@ -547,12 +613,12 @@ class VideoPlayer extends Component {
             onPress={() => {
               this.toggleControls();
             }}>
-            <Text style={[styles.leftRightControlOption]}>
+            <Text style={styles.leftRightControlOption}>
               {this.state.showRNVControls ? 'Hide controls' : 'Show controls'}
             </Text>
           </TouchableOpacity>
         </View>
-      </>
+      </View>
     );
   }
 
@@ -633,13 +699,25 @@ class VideoPlayer extends Component {
                   }}
                   text="decoration"
                 />
+                <ToggleControl
+                  isSelected={!!this.state.poster}
+                  onPress={() => {
+                    this.setState({
+                      poster: this.state.poster ? undefined : this.samplePoster,
+                    });
+                  }}
+                  selectedText="poster"
+                  unselectedText="no poster"
+                />
               </View>
               <View style={styles.generalControls}>
+                {/* shall be replaced by slider */}
                 <MultiValueControl
-                  values={[0.25, 0.5, 1.0, 1.5, 2.0]}
+                  values={[0, 0.25, 0.5, 1.0, 1.5, 2.0]}
                   onPress={this.onRateSelected}
                   selected={this.state.rate}
                 />
+                {/* shall be replaced by slider */}
                 <MultiValueControl
                   values={[0.5, 1, 1.5]}
                   onPress={this.onVolumeSelected}
@@ -675,10 +753,11 @@ class VideoPlayer extends Component {
               <View style={styles.generalControls}>
                 <Text style={styles.controlOption}>AudioTrack</Text>
                 {this.state.audioTracks?.length <= 0 ? (
-                  <Text style={styles.controlOption}>empty</Text>
+                  <Text style={styles.emptyPickerItem}>empty</Text>
                 ) : (
                   <Picker
                     style={styles.picker}
+                    itemStyle={styles.pickerItem}
                     selectedValue={this.state.selectedAudioTrack?.value}
                     onValueChange={itemValue => {
                       console.log('on audio value change ' + itemValue);
@@ -690,6 +769,9 @@ class VideoPlayer extends Component {
                       });
                     }}>
                     {this.state.audioTracks.map(track => {
+                      if (!track) {
+                        return;
+                      }
                       return (
                         <Picker.Item
                           label={track.language}
@@ -702,10 +784,11 @@ class VideoPlayer extends Component {
                 )}
                 <Text style={styles.controlOption}>TextTrack</Text>
                 {this.state.textTracks?.length <= 0 ? (
-                  <Text style={styles.controlOption}>empty</Text>
+                  <Text style={styles.emptyPickerItem}>empty</Text>
                 ) : (
                   <Picker
                     style={styles.picker}
+                    itemStyle={styles.pickerItem}
                     selectedValue={this.state.selectedTextTrack?.value}
                     onValueChange={itemValue => {
                       console.log('on value change ' + itemValue);
@@ -717,13 +800,18 @@ class VideoPlayer extends Component {
                       });
                     }}>
                     <Picker.Item label={'none'} value={'none'} key={'none'} />
-                    {this.state.textTracks.map(track => (
-                      <Picker.Item
-                        label={track.language}
-                        value={track.language}
-                        key={track.language}
-                      />
-                    ))}
+                    {this.state.textTracks.map(track => {
+                      if (!track) {
+                        return;
+                      }
+                      return (
+                        <Picker.Item
+                          label={track.language}
+                          value={track.language}
+                          key={track.language}
+                        />
+                      );
+                    })}
                   </Picker>
                 )}
               </View>
@@ -746,6 +834,7 @@ class VideoPlayer extends Component {
             this.video = ref;
           }}
           source={this.srcList[this.state.srcListId]}
+          textTracks={this.srcList[this.state.srcListId]?.textTracks}
           adTagUrl={this.srcList[this.state.srcListId]?.adTagUrl}
           drm={this.srcList[this.state.srcListId]?.drm}
           style={viewStyle}
@@ -770,10 +859,15 @@ class VideoPlayer extends Component {
           onAspectRatio={this.onAspectRatio}
           onReadyForDisplay={this.onReadyForDisplay}
           onBuffer={this.onVideoBuffer}
+          onSeek={this.onSeek}
           repeat={this.state.loop}
           selectedTextTrack={this.state.selectedTextTrack}
           selectedAudioTrack={this.state.selectedAudioTrack}
           playInBackground={false}
+          preventsDisplaySleepDuringVideoPlayback={true}
+          poster={this.state.poster}
+          onPlaybackRateChange={this.onPlaybackRateChange}
+          onPlaybackStateChanged={this.onPlaybackStateChanged}
         />
       </TouchableOpacity>
     );
@@ -886,6 +980,13 @@ const styles = StyleSheet.create({
     paddingRight: 2,
     lineHeight: 12,
   },
+  pickerContainer: {
+    width: 100,
+    alignSelf: 'center',
+    color: 'white',
+    borderWidth: 1,
+    borderColor: 'red',
+  },
   IndicatorStyle: {
     flex: 1,
     justifyContent: 'center',
@@ -923,11 +1024,28 @@ const styles = StyleSheet.create({
     width: 12,
   },
   picker: {
-    color: 'white',
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
+    width: 100,
+    height: 40,
   },
-});
+  pickerItem: {
+    color: 'white',
+    width: 100,
+    height: 40,
+  },
+  emptyPickerItem: {
+    color: 'white',
+    marginTop: 20,
+    marginLeft: 20,
+    flex: 1,
+    width: 100,
+    height: 40,
+  },
+  topControlsContainer: {
+    paddingTop: 30,
+  }
+ });
 
 export default VideoPlayer;
