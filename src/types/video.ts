@@ -185,6 +185,7 @@ export interface ReactVideoProps extends ReactVideoEvents, ViewProps {
   source?: ReactVideoSource;
   drm?: Drm;
   style?: StyleProp<ViewStyle>;
+  fullscreenViewId?: number,
   adTagUrl?: string;
   audioOutput?: AudioOutput; // Mobile
   automaticallyWaitsToMinimizeStalling?: boolean; // iOS

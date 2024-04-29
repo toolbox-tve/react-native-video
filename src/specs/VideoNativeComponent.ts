@@ -279,6 +279,7 @@ export interface VideoNativeProps extends ViewProps {
   selectedTextTrack?: SelectedTextTrack;
   selectedAudioTrack?: SelectedAudioTrack;
   selectedVideoTrack?: SelectedVideoTrack; // android
+  fullscreenViewId?: number,
   paused?: boolean;
   muted?: boolean;
   controls?: boolean;

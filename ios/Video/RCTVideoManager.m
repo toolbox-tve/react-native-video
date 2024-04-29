@@ -31,6 +31,7 @@ RCT_EXPORT_VIEW_PROPERTY(rate, float);
 RCT_EXPORT_VIEW_PROPERTY(fullscreen, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(fullscreenAutorotate, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(fullscreenOrientation, NSString);
+RCT_EXPORT_VIEW_PROPERTY(fullscreenViewId, NSNumber);
 RCT_EXPORT_VIEW_PROPERTY(filter, NSString);
 RCT_EXPORT_VIEW_PROPERTY(filterEnabled, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(progressUpdateInterval, float);
@@ -84,5 +85,7 @@ RCT_EXTERN_METHOD(setPlayerPauseState : (nonnull NSNumber*)paused reactTag : (no
 RCT_EXTERN_METHOD(presentFullscreenPlayer : (nonnull NSNumber*)reactTag)
 
 RCT_EXTERN_METHOD(dismissFullscreenPlayer : (nonnull NSNumber*)reactTag)
+
+RCT_EXTERN_METHOD(presentFullscreenPlayerTbx : (nonnull NSNumber*)reactTag)
 
 @end

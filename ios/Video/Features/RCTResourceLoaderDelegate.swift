@@ -166,7 +166,8 @@ class RCTResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URLSes
                         licenseServer: _drm.licenseServer,
                         certificateUrl: _drm.certificateUrl,
                         base64Certificate: _drm.base64Certificate,
-                        headers: _drm.headers
+                        headers: _drm.headers,
+                        options: _drm.options
                     )
 
                     guard let dataRequest = loadingRequest.dataRequest else {

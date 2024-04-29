@@ -5,6 +5,7 @@ struct DRMParams {
     let contentId: String?
     let certificateUrl: String?
     let base64Certificate: Bool?
+    let options: [String: Any]?
 
     let json: NSDictionary?
 
@@ -17,6 +18,7 @@ struct DRMParams {
             self.certificateUrl = nil
             self.base64Certificate = nil
             self.headers = nil
+            self.options = nil
             return
         }
         self.json = json
@@ -35,6 +37,18 @@ struct DRMParams {
             self.headers = _headers
         } else {
             self.headers = nil
+        }
+
+        if let options = json["options"] as? [[String: Any]] {
+            var _options: [String: Any] = [:]
+            for options in options {
+                if let key = option["key"] as? String, let value = option["value"] {
+                    _options[key] = value
+                }
+            }
+            self.options = _options
+        } else {
+            self.options = nil
         }
     }
 }

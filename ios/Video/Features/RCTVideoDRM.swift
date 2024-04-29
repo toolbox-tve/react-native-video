@@ -129,7 +129,8 @@ enum RCTVideoDRM {
         licenseServer: String?,
         certificateUrl: String?,
         base64Certificate: Bool?,
-        headers: [String: Any]?
+        headers: [String: Any]?,
+        options: [String: Any]?
     ) async throws -> Data {
         let url = loadingRequest.request.url
 
@@ -149,6 +150,16 @@ enum RCTVideoDRM {
 
         guard let licenseServer else {
             throw RCTVideoError.noLicenseServerURL as! Error
+        }
+
+        if options, !options.isEmpty {
+            return try await DRMResolver.instance.fetchLicense(
+                licenseServer: licenseServer,
+                spcData: spcData,
+                contentId: contentId,
+                headers: headers,
+                options: options
+            )
         }
 
         return try await RCTVideoDRM.fetchLicense(

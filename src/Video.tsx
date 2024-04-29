@@ -80,6 +80,7 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
       selectedVideoTrack,
       selectedAudioTrack,
       selectedTextTrack,
+      fullscreenViewId,
       onLoadStart,
       onLoad,
       onError,
@@ -538,6 +539,7 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
           selectedTextTrack={_selectedTextTrack}
           selectedAudioTrack={_selectedAudioTrack}
           selectedVideoTrack={_selectedVideoTrack}
+          fullscreenViewId={fullscreenViewId || -1}
           onGetLicense={useExternalGetLicense ? onGetLicense : undefined}
           onVideoLoad={onVideoLoad as (e: NativeSyntheticEvent<object>) => void}
           onVideoLoadStart={onVideoLoadStart}
