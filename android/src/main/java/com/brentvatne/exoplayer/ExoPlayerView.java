@@ -134,6 +134,25 @@ public final class ExoPlayerView extends FrameLayout implements AdViewProvider {
         shutterView.setBackgroundColor(color);
     }
 
+
+    public void setFullscreenViewId(int fullscreenViewId){
+        Log.i(">>>>FullscreenViewId", String.valueOf(fullscreenViewId));
+        Activity mainActivity = (Activity) themedReactContext.getCurrentActivity();
+        ViewGroup fullscreenView = (ViewGroup)mainActivity.findViewById(fullscreenViewId);
+
+        parent = (ViewGroup) this.getParent();
+        parent.removeView(this);
+
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.MATCH_PARENT
+        );
+
+        fullscreenView.addView(this,layoutParams);
+        reLayout(this);
+        fullscreenView.requestLayout();
+    }
+
     private void updateSurfaceView() {
         View view;
         if (!useTextureView || useSecureView) {

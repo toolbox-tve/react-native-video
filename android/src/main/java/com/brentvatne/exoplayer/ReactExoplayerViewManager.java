@@ -90,6 +90,7 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
     private static final String PROP_SUBTITLE_STYLE = "subtitleStyle";
     private static final String PROP_SHUTTER_COLOR = "shutterColor";
     private static final String PROP_DEBUG = "debug";
+    private static final String PROP_FULLSCREEN_VIEW_ID = "fullscreenViewId";
 
     private final ReactExoplayerConfig config;
 
@@ -435,6 +436,12 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
             DebugLog.setConfig(Log.WARN, enableThreadDebug);
         }
     }
+
+    @ReactProp(name = PROP_FULLSCREEN_VIEW_ID)
+    public void setFullscreenViewId(final ReactExoplayerView videoView, final int fullscreenViewId){
+        videoView.setFullscreenViewId(fullscreenViewId);
+    }
+
 
     private boolean startsWithValidScheme(String uriString) {
         String lowerCaseUri = uriString.toLowerCase();
