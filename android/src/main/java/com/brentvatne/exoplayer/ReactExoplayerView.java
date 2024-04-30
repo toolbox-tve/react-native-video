@@ -93,6 +93,7 @@ import androidx.media3.extractor.metadata.emsg.EventMessage;
 import androidx.media3.extractor.metadata.id3.Id3Frame;
 import androidx.media3.extractor.metadata.id3.TextInformationFrame;
 import androidx.media3.ui.LegacyPlayerControlView;
+import android.util.Log;
 
 import com.brentvatne.common.api.ResizeMode;
 import com.brentvatne.common.api.SubtitleStyle;
@@ -163,6 +164,9 @@ public class ReactExoplayerView extends FrameLayout implements
     private Player.Listener eventListener;
 
     private ExoPlayerView exoPlayerView;
+    private ViewGroup fullscreenView;
+    private ViewGroup parent;
+
     private FullScreenPlayerView fullScreenPlayerView;
     private ImaAdsLoader adsLoader;
 
@@ -2000,6 +2004,35 @@ public class ReactExoplayerView extends FrameLayout implements
         }
         // need to be done at the end to avoid hiding fullscreen control button when fullScreenPlayerView is shown
         updateFullScreenButtonVisbility();
+    }
+
+    public void setFullscreenViewId(int fullscreenViewId){
+        if(fullscreenViewId > 0){
+            Activity mainActivity = (Activity) themedReactContext.getCurrentActivity();
+            fullscreenView = (ViewGroup)mainActivity.findViewById(fullscreenViewId);
+
+            parent = (ViewGroup) this.getParent();
+            parent.removeView(this);
+
+            ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                    LayoutParams.MATCH_PARENT,
+                    LayoutParams.MATCH_PARENT
+            );
+
+            fullscreenView.addView(this,layoutParams);
+            reLayout(this);
+            fullscreenView.requestLayout();
+        }else if(fullscreenView != null) {
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+            );
+            layoutParams.setMargins(0, 0, 0, 0);
+            fullscreenView.removeView(this);
+            parent.addView(this,layoutParams);
+            parent.requestLayout();
+            parent = null;
+        }
     }
 
     public void setUseTextureView(boolean useTextureView) {
