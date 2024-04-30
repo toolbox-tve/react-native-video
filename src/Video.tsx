@@ -176,6 +176,7 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
 
     const _drm = useMemo(() => {
       if (!drm) {
+        //@ts-ignore
         return;
       }
 
@@ -193,6 +194,7 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
 
     const _selectedTextTrack = useMemo(() => {
       if (!selectedTextTrack) {
+        //@ts-ignore
         return;
       }
       const value = selectedTextTrack.value
@@ -207,6 +209,7 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
 
     const _selectedAudioTrack = useMemo(() => {
       if (!selectedAudioTrack) {
+        //@ts-ignore
         return;
       }
       const value = selectedAudioTrack.value
@@ -221,6 +224,7 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
 
     const _selectedVideoTrack = useMemo(() => {
       if (!selectedVideoTrack) {
+        //@ts-ignore
         return;
       }
       const value = selectedVideoTrack?.value
@@ -468,6 +472,7 @@ const Video = forwardRef<VideoRef, ReactVideoProps>(
                 if (result !== undefined) {
                   nativeRef.current &&
                     VideoManager.setLicenseResult(
+                      //@ts-ignore
                       result,
                       data.loadedLicenseUrl,
                       getReactTag(nativeRef),
