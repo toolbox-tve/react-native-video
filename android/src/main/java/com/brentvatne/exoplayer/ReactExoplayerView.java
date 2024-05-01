@@ -18,6 +18,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.accessibility.CaptioningManager;
 import android.widget.FrameLayout;
@@ -1448,6 +1449,7 @@ public class ReactExoplayerView extends FrameLayout implements
             case PlaybackException.ERROR_CODE_DRM_PROVISIONING_FAILED:
             case PlaybackException.ERROR_CODE_DRM_SYSTEM_ERROR:
             case PlaybackException.ERROR_CODE_DRM_UNSPECIFIED:
+            case PlaybackException.ERROR_CODE_DRM_SCHEME_UNSUPPORTED:
                 if (!hasDrmFailed) {
                     // When DRM fails to reach the app level certificate server it will fail with a source error so we assume that it is DRM related and try one more time
                     hasDrmFailed = true;
