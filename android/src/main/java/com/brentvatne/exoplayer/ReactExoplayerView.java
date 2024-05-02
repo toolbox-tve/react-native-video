@@ -869,13 +869,13 @@ public class ReactExoplayerView extends FrameLayout implements
                 )
                 .createMediaSource(mediaItem);
 
-        if (cropStartMs >= 0 && cropEndMs >= 0) {
-            return new ClippingMediaSource(mediaSource, cropStartMs * 1000, cropEndMs * 1000);
-        } else if (cropStartMs >= 0) {
-            return new ClippingMediaSource(mediaSource, cropStartMs * 1000, TIME_END_OF_SOURCE);
-        } else if (cropEndMs >= 0) {
-            return new ClippingMediaSource(mediaSource, 0, cropEndMs * 1000);
-        }
+        // if (cropStartMs >= 0 && cropEndMs >= 0) {
+        //     return new ClippingMediaSource(mediaSource, cropStartMs * 1000, cropEndMs * 1000);
+        // } else if (cropStartMs >= 0) {
+        //     return new ClippingMediaSource(mediaSource, cropStartMs * 1000, TIME_END_OF_SOURCE);
+        // } else if (cropEndMs >= 0) {
+        //     return new ClippingMediaSource(mediaSource, 0, cropEndMs * 1000);
+        // }
 
         return mediaSource;
     }
